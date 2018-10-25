@@ -30,6 +30,7 @@ macro "Set Fluorophore and Line width [f]"{
                 fluorophore = "SUM_C3-";
         };
         run("Line Width...", "line="+lineValue);
+        print("Channel set to " + fluorophore + " and LineWidth set to "+lineValue);
 }
 
 macro "open and set channels [o]"{
@@ -59,12 +60,12 @@ macro "close and open next [w]"{
 	print("");
 	print("New file will be opened...");
 	print("");
-	AWpre = replace(ActiveWindow,"_R3D_D3D.dv","");
-	len=lengthOf(AWpre);
-	len = len - 2;
+	AWpre = replace(ActiveWindow,"_R3D_D3D.dv",""); //prefix of ActiveWindow plus cellcount
+	len = lengthOf(AWpre);
+	len = len - 2; //removes the cellcount in the filename (always doubledigit number
 	AWpre = substring(AWpre, 0, len);
- 	AWend = replace(ActiveWindow,AWpre,"");
-	AWint = replace(AWend,"_R3D_D3D.dv","");
+ 	AWend = replace(ActiveWindow,AWpre,""); //removes prefix from active window, leaves cellcount+ending
+	AWint = replace(AWend,"_R3D_D3D.dv",""); //removes ending, leaves cellcount
 	AWint = parseInt(AWint);
 	AWint = AWint +1;
 	AWend = "_R3D_D3D.dv";
@@ -74,9 +75,10 @@ macro "close and open next [w]"{
 	else if (AWint > 9){	  
 		ActiveWindow = AWpre + AWint + AWend;
 		};
-	else{
-		ActiveWindow = "Na"; 
-		};
+	//else{
+	//	ActiveWindow = "Na";
+          //      print("ActiveWindow was set to Na; AWint was not a number ?!");
+		//};
 	print("Next File will been opened");
 	openDVFile();
 	makeRectangle(519, 500, 45, 45);
@@ -121,12 +123,12 @@ macro "Macro_analyse intensity in Ana [d]"{
 }
 
 macro "Save values from enlargment, go to next cell [n]"{
+        count = count + 1;
         SaveNameM = replace(ActiveWindow,".dv","_Cell_" + count);
 	path1 =  getDirectory("current") + "Analysis\\";
 	store_nameM = SaveNameM + ".csv";
 	saveAs("Measurements", path1 + store_nameM);
 	run("Clear Results"); // clear after saving
-        count = count + 1;
 }
 
 
