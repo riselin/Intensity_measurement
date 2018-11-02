@@ -55,7 +55,7 @@ for i in range(0, len(os.listdir('./csv/'))):
     #****************#
     secondary_y = second_largest([p[1] for p in _max])
     if secondary_y is None:
-        print(filename, " was None, abort")
+        print(filename, " has only one peak, abort") #append filename somewhere
         continue
     y_cut_ini = y - secondary_y #subtract background from all y
     x_cut = []
@@ -81,7 +81,11 @@ for i in range(0, len(os.listdir('./csv/'))):
     
     p0 = [max(y_cut), mean_f, sigma]
     
-    popt,pcov = curve_fit(Gauss, x_cut, y_cut, p0) #is this a, x0, sigma? yes!
+    try:
+        popt,pcov = curve_fit(Gauss, x_cut, y_cut, p0) #is this a, x0, sigma? yes!
+    except (RuntimeError, TypeError):
+        print("Runtime or Type Error, most likely due to a bad measurement in ", filename)
+        continue
     
     #**************************#
     # Make continuous function #
