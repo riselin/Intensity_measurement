@@ -124,6 +124,7 @@ for i in range(0, len(os.listdir('./csv/'))):
     #******#
     # PLOT #
     #******#
+    plt.plot(x,y)
     plt.plot(x_f, y_f) #plot to illustrate where y_f is
     plt.plot(x_cut, y_cut, 'b+:', label='data')
     plt.plot(x_cut, Gauss(x_cut, *popt), 'r-', label='fit')
