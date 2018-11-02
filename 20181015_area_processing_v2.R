@@ -6,13 +6,12 @@
 
 rm(list=ls())
 
-#setwd("//pasteur/SysBC-Home/riselin/Desktop/8_Misc/Coding/Python/Pythonscripts")
-#setwd("~/polybox/PhD/Pythonscripts")
+#setwd()
 
 
 #csv export path
-csvpath <- "../csv/"
-wdpath <-  "../"
+csvpath <- "./csv/"
+wdpath <-  "./"
 
 #import data output, exp_overview
 csvfilepath <- paste(csvpath, 'data_output.csv', sep="")
@@ -25,6 +24,6 @@ d.experiment_overview <- read.csv(csvoverviewfilepath, header = T, sep = ";")
 
 
 d.master <- merge(d.dataoutput, d.experiment_overview, by = "strain")
-colnames(d.master) <- c("strain", "intensity", "celltype")
+colnames(d.master) <- c("strain", "intensity", "celltype", "cellID")
 
-write.table(d.master, file = '../intensity_measurement.csv',row.names=FALSE, sep=";")
+write.table(d.master, file = './intensity_measurement.csv',row.names=FALSE, sep=";")
