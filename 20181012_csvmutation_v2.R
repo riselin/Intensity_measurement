@@ -10,14 +10,14 @@
 
 rm(list=ls())
 
-#setwd("//pasteur/SysBC-Home/riselin/Desktop/8_Misc/Coding/Python/Pythonscripts")
-#setwd("~/polybox/PhD/Pythonscripts")
+#setwd()
+#setwd()
 
 #csv import path
-csvimportpath <- "../original_csv/"
+csvimportpath <- "./original_csv/"
 
 #csv export path
-csvexportpath <- "../csv/"
+csvexportpath <- "./csv/"
 
 #loop through all files
 filenames <- list.files(path=csvimportpath)
@@ -31,13 +31,23 @@ colnames(d.experiment_overview) <- c("strain", "celltype")
 for (i in 1:length(filenames)){
   d.temp <- read.csv(csvfileimportpaths[i], header = T, sep = ",")
   names(d.temp) <- gsub("\\.csv", "", filenames[i])
+  if (ncol(d.temp) == 3){
+    d.temp2 <- c(1:nrow(d.temp))
+    d.experiment_overview[i,'celltype'] <- d.temp[1, 2]
+    d.experiment_overview[i,'cellID'] <- d.temp[1, 3]
+    d.export <- data.frame(cbind(d.temp2,d.temp[,1]))
+  }
+  if (ncol(d.temp) == 4){
+    d.experiment_overview[i,'celltype'] <- d.temp[1, 3]
+    d.experiment_overview[i,'cellID'] <- d.temp[1, 4]
+    d.export <- d.temp[,c(1:2)]
+  }
   d.experiment_overview[i,'strain'] <- filenames[i]
-  d.experiment_overview[i,'celltype'] <- d.temp[1, 3]
-  d.experiment_overview[i,'cellID'] <- d.temp[1, 4]
+  
   d.export <- d.temp[,1:2]
-  colnames(d.export) <- c("X", "Y")
-  d.export[,"X"] <- d.export[,"X"]*0.128*1000
+  colnames(d.export) <- c("X", "Y") #renaming the columns
+  d.export[,"X"] <- d.export[,"X"]*0.128*1000 #be careful about this part: he allways has 0.128nm between each pixel we could just delete it. 
   write.table(d.export, file = csvfileexportpaths[i],row.names=FALSE, sep=";")
 }
 
-write.table(d.experiment_overview, file = '../intensity_overview.csv',row.names=FALSE, sep=";")
+write.table(d.experiment_overview, file = './intensity_overview.csv',row.names=FALSE, sep=";")
