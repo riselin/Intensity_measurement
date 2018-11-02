@@ -33,6 +33,7 @@ for (i in 1:length(filenames)){
   names(d.temp) <- gsub("\\.csv", "", filenames[i])
   d.experiment_overview[i,'strain'] <- filenames[i]
   d.experiment_overview[i,'celltype'] <- d.temp[1, 3]
+  d.experiment_overview[i,'cellID'] <- d.temp[1, 4]
   d.export <- d.temp[,1:2]
   colnames(d.export) <- c("X", "Y")
   d.export[,"X"] <- d.export[,"X"]*0.128*1000
