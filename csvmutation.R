@@ -31,6 +31,7 @@ colnames(d.experiment_overview) <- c("strain", "celltype")
 for (i in 1:length(filenames)){
   d.temp <- read.csv(csvfileimportpaths[i], header = T, sep = ",")
   names(d.temp) <- gsub("\\.csv", "", filenames[i])
+  d.temp[,2] <- gsub(".", "", d.temp[,2], fixed = T)
   if (ncol(d.temp) == 3){
     d.temp2 <- c(1:nrow(d.temp))
     d.experiment_overview[i,'celltype'] <- d.temp[1, 2]
