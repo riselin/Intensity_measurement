@@ -14,6 +14,7 @@ Difference to v1:
 
 """
 
+
 from scipy.optimize import curve_fit
 import pylab
 import pandas as pd
