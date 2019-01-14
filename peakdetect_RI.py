@@ -20,127 +20,129 @@ import csv
 
 data_output = []
 
+def second_largest(numbers): #found online, link unavailable
+    """return the second highest number of a list"""
+    count = 0
+    m1 = m2 = float('-inf')
+    for x in numbers:
+        count += 1
+        if x > m2:
+            if x >= m1:
+                m1, m2 = x, m1
+            else:
+                m2 = x
+    return m2 if count >= 2 else None
 
-
-
-
-
-for i in range(0, len(os.listdir('./csv/'))):
-    filename = os.listdir('./csv/')[i]
-    filepath = ('./csv/' + filename)
-    data = pd.read_csv(filepath, delimiter = ";")
-    x = data.X
-    y = data.Y
+def identify_single_peak(second_peak):
+    if second_peak is None:
+        return True
     
-    def second_largest(numbers):
-        count = 0
-        m1 = m2 = float('-inf')
-        for x in numbers:
-            count += 1
-            if x > m2:
-                if x >= m1:
-                    m1, m2 = x, m1
-                else:
-                    m2 = x
-        return m2 if count >= 2 else None
+def Gauss(x, a, x0, s):
+        return a * np.exp(-(x - x0) ** 2 / (2 * s ** 2)) + c # a should be 1/sqrt(2*pi*sigma**2)?
+
+    
+def fit_gaussian_to_rawdata(x_cut, y_cut):
+    function_mean = sum(x_cut * y_cut) / sum(y_cut)
+    sigma = np.sqrt(sum(y_cut * (x_cut - function_mean) ** 2) / sum(y_cut))
+    p0 = [max(y_cut), function_mean, sigma]
+    return p0
+
+
+for file in range(0, len(os.listdir('./csv/'))): #0 not necessary because standard anyway?
+    filename = os.listdir('./csv/')[file]
+    filepath = ('./csv/' + filename)
+    image_data = pd.read_csv(filepath, delimiter = ";")
+    raw_positon_values = image_data.X
+    raw_intensity_greyvalues = image_data.Y
+    
     
     #*************#
     # DETECT PEAK #
     #*************#
-    _max, _min = peakbg(y, x, lookahead = 1, delta = 0) #lookahead 1,2,3,4 ok. Difference?
+    _max, _min = peakbg(raw_intensity_greyvalues, raw_positon_values, lookahead = 1, delta = 0) #lookahead 1,2,3,4 ok. Difference?
     
     #****************#
     # CUT BACKGROUND #
     #****************#
-    secondary_y = second_largest([p[1] for p in _max])
-    if secondary_y is None:
-        print(filename, " has only one peak, abort") #append filename somewhere
+    second_peak = second_largest([p[1] for p in _max]) #I don't understand
+    if identify_single_peak:
+        print(filename, "has only one peak, skip to next iteration")
         continue
-    y_cut_ini = y - secondary_y #subtract background from all y
-    x_cut = []
-    y_cut = []
-    for i in range(len(y_cut_ini)):
-        if y_cut_ini[i] >0:
-            y_cut = np.append(y_cut, y_cut_ini[i])
-            x_cut = np.append(x_cut, x[i])
-    
-    
+    difference_raw_intensity_second_peak = raw_intensity_greyvalues - second_peak #subtract background from all raw_intensity_greyvalues
+    postions_intensity_above_cut = []
+    intensities_intensity_above_cut = []
+    for position in range(len(difference_raw_intensity_second_peak)):
+        if difference_raw_intensity_second_peak[position] > 0:
+            intensities_intensity_above_cut = np.append(intensities_intensity_above_cut, difference_raw_intensity_second_peak[position])
+            postions_intensity_above_cut = np.append(postions_intensity_above_cut, raw_positon_values[position])
+
     #**************#
     # FIT GAUSSIAN #
     #**************#
     # The Gaussian is fit onto the cut curve, not the whole. This makes fitting easier
     # and more likely due to a single peak.
     # weighted arithmetic mean
-    mean_f = sum(x_cut * y_cut) / sum(y_cut)
-    sigma = np.sqrt(sum(y_cut * (x_cut - mean_f)**2) / sum(y_cut))
-    
-    c = min(y_cut)
-    def Gauss(x_cut, a, x0, s):
-        return a * np.exp(-(x_cut - x0)**2 / (2 * s**2))+c # a should be 1/sqrt(2*pi*sigma**2)?
-    
-    p0 = [max(y_cut), mean_f, sigma]
-    
+    p0 = fit_gaussian_to_rawdata(postions_intensity_above_cut, intensities_intensity_above_cut)
+    c = min(intensities_intensity_above_cut)
     try:
-        popt,pcov = curve_fit(Gauss, x_cut, y_cut, p0) #is this a, x0, sigma? yes!
+        popt,pcov = curve_fit(Gauss, postions_intensity_above_cut, intensities_intensity_above_cut, p0) #is this a, x0, sigma? yes!
     except (RuntimeError, TypeError):
-        print("Runtime or Type Error, most likely due to a bad measurement in ", filename)
+        print("Runtime or Type Error, likely due to a bad measurement in ", filename)
         continue
     
-    #**************************#
-    # Make continuous function #
-    #**************************#
-    x_f = np.array(range(int(min(x_cut)), int(max(x_cut)), 1))
-    y_f = Gauss(x_f, *popt) #apply function to these x-values
+    #************************************#
+    # Get values for continuous function #
+    #************************************#
+    x_continuous_function = np.array(range(int(min(postions_intensity_above_cut)), int(max(postions_intensity_above_cut)), 1))
+    y_continuous_function = Gauss(x_continuous_function, *popt)
     
     
     #******#
     # FWHM #
     #******#
-    #calculate exact half max, and later find closest point to this value
-    hm = max(y_f)/2 #because I moved the scale down, so now 0 really is the actual baseline
-    
+    hm = max(y_continuous_function)/2 #because I moved the scale down, so now 0 really is the actual baseline
     
     #find points closest to full width half max on function
-    y_peak_index = np.where(y_f == max(y_f))[0][0] #index of value of peak
-    y_f_left = y_f[0:y_peak_index] # all y values left of peak
-    y_f_right = y_f[y_peak_index:] # all y values right of peak
-    y_left = y_f_left[np.where(y_f_left == min(y_f_left, key=lambda x:abs(x-hm)))[0][0]] #closest y_value to calculated intersection, left
-    y_right = y_f_right[np.where(y_f_right == min(y_f_right, key=lambda x:abs(x-hm)))[0][0]]#closest y_value to calculated intersection, right
+    y_peak_index = np.where(y_continuous_function == max(y_continuous_function))[0][0] #index of value of peak
+    y_f_left_of_peak = y_continuous_function[0:y_peak_index] # all y values left of peak
+    y_f_right_of_peak = y_continuous_function[y_peak_index:] # all y values right of peak
+    y_left = y_f_left_of_peak[np.where(y_f_left_of_peak == min(y_f_left_of_peak, key=lambda x:abs(x-hm)))[0][0]] #closest y_value to calculated intersection, left
+    y_right = y_f_right_of_peak[np.where(y_f_right_of_peak == min(y_f_right_of_peak, key=lambda x:abs(x-hm)))[0][0]]#closest y_value to calculated intersection, right
     
-    x_f_left= x_f[np.where(y_f == y_left)[0][0]] #x_value of left fwhm intersection
-    x_f_right= x_f[np.where(y_f == y_right)[0][0]]#x_value of right fwhm intersection
-    y_fwhm = y_f[np.where(y_f == y_left)[0][0]:np.where(y_f == y_right)[0][0]]
-    x_fwhm = x_f[np.where(y_f == y_left)[0][0]:np.where(y_f == y_right)[0][0]]
+    x_f_left_of_peak= x_continuous_function[np.where(y_continuous_function == y_left)[0][0]] #x_value of left fwhm intersection
+    x_f_right_of_peak= x_continuous_function[np.where(y_continuous_function == y_right)[0][0]]#x_value of right fwhm intersection
+    y_fwhm = y_continuous_function[np.where(y_continuous_function == y_left)[0][0]:np.where(y_continuous_function == y_right)[0][0]]
+    x_fwhm = x_continuous_function[np.where(y_continuous_function == y_left)[0][0]:np.where(y_continuous_function == y_right)[0][0]]
     
     #****************#
     # INTEGRATE AREA #
     #****************#
     total_area = simps(y_fwhm, x_fwhm)
-    square_area = (x_f_right-x_f_left)*hm
-    actual_area = total_area - square_area
+    square_area = (x_f_right_of_peak - x_f_left_of_peak)*hm
+    peak_area_above_fwhm = total_area - square_area
     
     #***********#
     # SAVE AREA #
     #***********#
-    data_output.append([filename, actual_area])
+    data_output.append([filename, peak_area_above_fwhm])
 
     #******#
     # PLOT #
     #******#
-    plt.plot(x,y)
-    plt.plot(x_f, y_f) #plot to illustrate where y_f is
-    plt.plot(x_cut, y_cut, 'b+:', label='data')
-    plt.plot(x_cut, Gauss(x_cut, *popt), 'r-', label='fit')
+    plt.plot(raw_positon_values, raw_intensity_greyvalues)
+    plt.plot(x_continuous_function, y_continuous_function) #plot to illustrate where y_continuous_function is
+    plt.plot(postions_intensity_above_cut, intensities_intensity_above_cut, 'b+:', label='data')
+    plt.plot(postions_intensity_above_cut, Gauss(postions_intensity_above_cut, *popt), 'r-', label='fit')
     plt.axhline(y = hm) #plot half max line
-    plt.axvline(x = x_f_left)
-    plt.axvline(x = x_f_right)
+    plt.axvline(x = x_f_left_of_peak)
+    plt.axvline(x = x_f_right_of_peak)
     plt.title(filename)
     plt.xlabel('x coordinate')
     plt.ylabel('intensity (A.U.)')
     imagename = './png/' + filename + '.png'
     pylab.savefig(imagename, bbox_inches='tight')
     #plt.show()
-    plt.pause(0.25)
+    plt.pause(0.25) #allows user to check plots in realtime
     plt.close()
 
 with open('./csv/data_output.csv', "w", newline='') as csv_file:
