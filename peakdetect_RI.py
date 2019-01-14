@@ -5,12 +5,6 @@ Created on Thu Oct 11 18:13:11 2018
 
 @author: riselAir
 
-Difference to v1:
-    open several csv with values
-    store name
-    save plot with name
-    save area with name
-
 
 """
 
@@ -25,6 +19,11 @@ import os
 import csv
 
 data_output = []
+
+
+
+
+
 
 for i in range(0, len(os.listdir('./csv/'))):
     filename = os.listdir('./csv/')[i]
