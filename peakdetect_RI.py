@@ -13,10 +13,6 @@ Difference to v1:
 
 
 """
-#branch test
-
-
-#change in masterbranch
 
 from scipy.optimize import curve_fit
 import pylab
