@@ -10,6 +10,8 @@ Created on Thu Oct 11 18:13:11 2018
 
 """
 
+import os
+import csv
 from scipy.optimize import curve_fit
 import pylab
 import pandas as pd
@@ -17,8 +19,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from peakdetect_bergmann import peakdetect as peakbg
 from scipy.integrate import simps
-import os
-import csv
 
 data_output = []
 
@@ -26,7 +26,7 @@ data_output = []
 
 POSITIONINCREMENT = 0.128
 
-def second_largest(numbers): #found online, link unavailable
+def second_largest(numbers): #found online, https://stackoverflow.com/questions/16225677/get-the-second-largest-number-in-a-list-in-linear-time
     """Return the second highest number of a list, or None if just one exists."""
     count = 0
     m1 = m2 = float('-inf')
@@ -61,6 +61,7 @@ def Gauss(x, a, x0, s, c):
         return a * np.exp(-(x - x0) ** 2 / (2 * s ** 2)) + c # scipy.stats.norm
 
 def xvalues_for_continuous_curve(x):
+    """enlarge xvalues by 1000 and fill to a resolution of 1 (e.g. add around 634 for 6 points)"""
     x = x*1000 #remove floats
     x_continuous_curve = np.array(range(int(min(x)), int(max(x)), 1))
     x_continuous_curve = x_continuous_curve/1000
@@ -79,9 +80,6 @@ def fwhm_point_identifier(x_cont, y_cont, hm):
     fx = x_cont[np.where(y_cont == y_left)[0][0]:np.where(y_cont == y_right)[0][0]]
     return fx, fy, x_smaller_peak, x_larger_peak
 
-def fit_gaussian():
-    pass
-
 def calculate_area(x, opt): #calls two other functions
     x_continuous_function = xvalues_for_continuous_curve(x)
     y_continuous_function = Gauss(x_continuous_function, opt)
@@ -92,6 +90,22 @@ def calculate_area(x, opt): #calls two other functions
     peak_area_above_fwhm = total_area - square_area
     return hm, peak_area_above_fwhm, x_left, x_right, x_continuous_function, y_continuous_function
 
+def compute_area(raw_intensity_greyvalues, increment):
+    _max, _min = peakbg(raw_intensity_greyvalues, raw_positon_values, lookahead = 2, delta = 0)
+    second_peak = second_largest([p[1] for p in _max])
+    if identified_single_peak(second_peak):
+        print(filename, "has only one peak, skip to next iteration")
+        #pass exception
+    positions_intensity_above_cut, intensities_intensity_above_cut = cut_background(raw_intensity_greyvalues, second_peak, increment)
+    gaussfit_values = fit_gaussian_to_shifted_data(positions_intensity_above_cut, intensities_intensity_above_cut) #rename
+    #c = min(intensities_intensity_above_cut)
+    try:
+        popt,pcov = curve_fit(Gauss, positions_intensity_above_cut, intensities_intensity_above_cut, gaussfit_values) #is this a, x0, sigma? yes!
+    except (RuntimeError, TypeError):
+        print("Runtime or Type Error, likely due to a bad measurement in ", filename)
+        #pass exception
+    return positions_intensity_above_cut, intensities_intensity_above_cut, popt
+
 for file in range(0, len(os.listdir('./csv/'))):
     filename = os.listdir('./csv/')[file]
     filepath = ('./csv/' + filename)
@@ -99,41 +113,8 @@ for file in range(0, len(os.listdir('./csv/'))):
     raw_positon_values = image_data.X #pandas series object
     raw_intensity_greyvalues = image_data.Y #pandas series object
 
-########## START COMPUTE 
-    
-    #*************#
-    # DETECT PEAK #
-    #*************#
-    _max, _min = peakbg(raw_intensity_greyvalues, raw_positon_values, lookahead = 2, delta = 0)
-    
-    #****************#
-    # CUT BACKGROUND #
-    #****************#
-    second_peak = second_largest([p[1] for p in _max])
-    if identified_single_peak(second_peak):
-        print(filename, "has only one peak, skip to next iteration")
-        continue
-    positions_intensity_above_cut, intensities_intensity_above_cut = cut_background(raw_intensity_greyvalues, second_peak, POSITIONINCREMENT)
-
-    #**************#
-    # FIT GAUSSIAN #
-    #**************#
-    # The Gaussian is fit onto the cut curve, not the whole. This makes fitting easier
-    # and more likely due to a single peak.
-    # weighted arithmetic mean
-    gaussfit_values = fit_gaussian_to_shifted_data(positions_intensity_above_cut, intensities_intensity_above_cut) #rename
-    c = min(intensities_intensity_above_cut)
-    
-    try:
-        popt,pcov = curve_fit(Gauss, positions_intensity_above_cut, intensities_intensity_above_cut, gaussfit_values) #is this a, x0, sigma? yes!
-    except (RuntimeError, TypeError):
-        print("Runtime or Type Error, likely due to a bad measurement in ", filename)
-        continue
-    
-    #too much output for a single function?
+    positions_intensity_above_cut, intensities_intensity_above_cut, popt = compute_area(raw_intensity_greyvalues, POSITIONINCREMENT)
     hm, area, x_left, x_right, x_continuous_function, y_continuous_function = calculate_area(positions_intensity_above_cut, *popt)
-
-########## END COMPUTE
 
     #******#
     # PLOT #
@@ -145,9 +126,9 @@ for file in range(0, len(os.listdir('./csv/'))):
     plt.axhline(y = hm) #plot half max line
     plt.axvline(x = x_left)
     plt.axvline(x = x_right)
-    plt.title(filename)
     plt.xlabel('x coordinate')
     plt.ylabel('intensity (A.U.)')
+    plt.title(filename)
     imagename = './png/' + filename + '.png'
     pylab.savefig(imagename, bbox_inches='tight')
     #plt.show()
