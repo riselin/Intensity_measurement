@@ -38,7 +38,7 @@ def identify_single_peak(second_peak):
         return True
     
 def Gauss(x, a, x0, s):
-        return a * np.exp(-(x - x0) ** 2 / (2 * s ** 2)) + c # a should be 1/sqrt(2*pi*sigma**2)?
+        return a * np.exp(-(x - x0) ** 2 / (2 * s ** 2)) + c # scipy.stats.norm
 
     
 def fit_gaussian_to_rawdata(x_cut, y_cut):
@@ -60,11 +60,12 @@ for file in range(0, len(os.listdir('./csv/'))): #0 not necessary because standa
     # DETECT PEAK #
     #*************#
     _max, _min = peakbg(raw_intensity_greyvalues, raw_positon_values, lookahead = 1, delta = 0) #lookahead 1,2,3,4 ok. Difference?
+    #unittest this
     
     #****************#
     # CUT BACKGROUND #
     #****************#
-    second_peak = second_largest([p[1] for p in _max]) #I don't understand
+    second_peak = second_largest([p[1] for p in _max])
     if identify_single_peak:
         print(filename, "has only one peak, skip to next iteration")
         continue
@@ -76,6 +77,10 @@ for file in range(0, len(os.listdir('./csv/'))): #0 not necessary because standa
             intensities_intensity_above_cut = np.append(intensities_intensity_above_cut, difference_raw_intensity_second_peak[position])
             postions_intensity_above_cut = np.append(postions_intensity_above_cut, raw_positon_values[position])
 
+#function, make more readable
+            
+            
+            
     #**************#
     # FIT GAUSSIAN #
     #**************#
