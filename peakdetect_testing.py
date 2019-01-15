@@ -21,7 +21,8 @@ class TestSecondLargest(unittest.TestCase):
         self.assertEqual()
         
 class TestGaussFit(unittest.TestCase):
-    
+    """ This test takes two peaks, correctly cuts off at the lower one,
+    and calculates the area of the remaining curve. It does NOT calculate the area of the FWHM"""
     def test_gaussfit_for_analytic_reference(self):
         major_mean = 7.
         minor_mean = 3.

@@ -64,7 +64,7 @@ def xvalues_for_continuous_curve(x):
     x = x*1000 #remove floats
     x_continuous_curve = np.array(range(int(min(x)), int(max(x)), 1))
     x_continuous_curve = x_continuous_curve/1000
-    x = x/1000
+    x = x/1000 #return floats
     return x_continuous_curve
 
 def fwhm_point_identifier(x_cont, y_cont, hm):
@@ -79,12 +79,20 @@ def fwhm_point_identifier(x_cont, y_cont, hm):
     fx = x_cont[np.where(y_cont == y_left)[0][0]:np.where(y_cont == y_right)[0][0]]
     return fx, fy, x_smaller_peak, x_larger_peak
 
-def fit_gaussian()
+def fit_gaussian():
+    pass
 
-def calculate_area():
-    
+def calculate_area(x, opt): #calls two other functions
+    x_continuous_function = xvalues_for_continuous_curve(x)
+    y_continuous_function = Gauss(x_continuous_function, opt)
+    hm = max(y_continuous_function)/2 #needed globally, output!
+    x_curve, y_curve, x_left, x_right = fwhm_point_identifier(x_continuous_function, y_continuous_function, hm)
+    total_area = simps(y_curve, x_curve)
+    square_area = (x_right - x_left)*hm
+    peak_area_above_fwhm = total_area - square_area
+    return hm, peak_area_above_fwhm, x_left, x_right, x_continuous_function, y_continuous_function
 
-for file in range(0, len(os.listdir('./csv/'))): #0 not necessary because standard anyway?
+for file in range(0, len(os.listdir('./csv/'))):
     filename = os.listdir('./csv/')[file]
     filepath = ('./csv/' + filename)
     image_data = pd.read_csv(filepath, delimiter = ";", encoding="utf-8-sig")
@@ -122,26 +130,8 @@ for file in range(0, len(os.listdir('./csv/'))): #0 not necessary because standa
         print("Runtime or Type Error, likely due to a bad measurement in ", filename)
         continue
     
-    #************************************#
-    # Get values for continuous function #
-    #************************************#
-    x_continuous_function = xvalues_for_continuous_curve(positions_intensity_above_cut)
-    y_continuous_function = Gauss(x_continuous_function, *popt)
-    
-    #******#
-    # FWHM #
-    #******#
-    hm = max(y_continuous_function)/2 #needed globally!
-    
-    #find points closest to full width half max on function
-    x_curve, y_curve, x_left, x_right = fwhm_point_identifier(x_continuous_function, y_continuous_function, hm)
-    
-    #****************#
-    # INTEGRATE AREA #
-    #****************#
-    total_area = simps(y_curve, x_curve)
-    square_area = (x_right - x_left)*hm
-    peak_area_above_fwhm = total_area - square_area
+    #too much output for a single function?
+    hm, area, x_left, x_right, x_continuous_function, y_continuous_function = calculate_area(positions_intensity_above_cut, *popt)
 
 ########## END COMPUTE
 
@@ -167,7 +157,7 @@ for file in range(0, len(os.listdir('./csv/'))): #0 not necessary because standa
     #***********#
     # SAVE AREA #
     #***********#
-    data_output.append([filename, peak_area_above_fwhm])
+    data_output.append([filename, area])
 
 with open('./csv/data_output.csv', "w", newline='') as csv_file:
         writer = csv.writer(csv_file, delimiter=',')
