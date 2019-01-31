@@ -19,7 +19,7 @@ class TestSecondLargest(unittest.TestCase):
     def test_identifying_second_highest_number(self):
         self.assertEqual(second_largest(numbers = [1,1,1,3,5,3,3,6,3,3,2]), 5)
         
-    def test_abort_if_none(self):
+    def test_function_should_identify_if_none(self):
         abort_result_one = second_largest(numbers = [1])
         abort_result_empty = second_largest(numbers = [])
         self.assertEqual(abort_result_one, abort_result_empty, None)
