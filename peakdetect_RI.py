@@ -43,25 +43,27 @@ def identified_single_peak(second_peak):
     if second_peak is None:
         return True
     
-def cut_background(raw_intensity, second, increment):
-    """ Take intensity values and second peak, shift values down by second peak"""
+def cut_background(raw_intensity, second):
+    """cut_background: take intensity values and second peak, shift values down by second peak"""
     difference_raw_intensity_second_peak = (raw_intensity - second).values
     positions, = np.where(difference_raw_intensity_second_peak > 0)
-    positions_intensity_above_cut = positions*increment #get indices of desired values -> equivalent to positions if multiplied by 0.128?
+    positions_intensity_above_cut = positions*POSITIONINCREMENT #get indices of desired values -> equivalent to positions if multiplied by 0.128?
     intensities_intensity_above_cut = difference_raw_intensity_second_peak[difference_raw_intensity_second_peak > 0]
     return positions_intensity_above_cut, intensities_intensity_above_cut
     
-def fit_gaussian_to_shifted_data(x_cut, y_cut):
+def fit_gaussian_to_shifted_data(x_cut, y_cut): #counts as one argument because ordered compontents of single value
     function_mean = sum(x_cut * y_cut) / sum(y_cut)
     sigma = np.sqrt(sum(y_cut * (x_cut - function_mean) ** 2) / sum(y_cut))
-    p0 = [max(y_cut), function_mean, sigma] #rename p0
+    #global c
+    c = min(y_cut)
+    p0 = [max(y_cut), function_mean, sigma, c] #rename p0
     return p0
 
-def Gauss(x, a, x0, s, c):
-        return a * np.exp(-(x - x0) ** 2 / (2 * s ** 2)) + c # scipy.stats.norm
+def Gauss(x, a, x0, s, c): #counts as one argument because ordered compontents of single value
+    return a * np.exp(-(x - x0) ** 2 / (2 * s ** 2)) + c # scipy.stats.norm
 
 def xvalues_for_continuous_curve(x):
-    """enlarge xvalues by 1000 and fill to a resolution of 1 (e.g. add around 634 for 6 points)"""
+    """xvalues_for_continuous_curve: enlarge xvalues by 1000 and fill to a resolution of 1 (e.g. add around 634 for 6 points)"""
     x = x*1000 #remove floats
     x_continuous_curve = np.array(range(int(min(x)), int(max(x)), 1))
     x_continuous_curve = x_continuous_curve/1000
@@ -69,6 +71,7 @@ def xvalues_for_continuous_curve(x):
     return x_continuous_curve
 
 def fwhm_point_identifier(x_cont, y_cont, hm):
+    # 3 arguments and 4 returns are bad design! Change x_cont and y_cont to one object, same for fx/fy and x_smaller/x_larger
     y_peak_index = np.where(y_cont == max(y_cont))[0][0] #index of value of peak
     y_smaller_peak = y_cont[0:y_peak_index] # all y values left of peak
     y_larger_peak = y_cont[y_peak_index:] # all y values right of peak
@@ -80,31 +83,26 @@ def fwhm_point_identifier(x_cont, y_cont, hm):
     fx = x_cont[np.where(y_cont == y_left)[0][0]:np.where(y_cont == y_right)[0][0]]
     return fx, fy, x_smaller_peak, x_larger_peak
 
-def calculate_area(x, opt): #calls two other functions
+def compute_area(y_greyscale):
+    _max, _min = peakbg(y_greyscale, raw_positon_values, lookahead = 2, delta = 0)
+    second_peak = second_largest([p[1] for p in _max])
+    if identified_single_peak(second_peak):
+        print(filename, "has only one peak, skip to next iteration")
+        #pass exception
+    positions_intensity_above_cut, intensities_intensity_above_cut = cut_background(y_greyscale, second_peak)
+    gaussfit_values = fit_gaussian_to_shifted_data(positions_intensity_above_cut, intensities_intensity_above_cut) #rename
+    popt,pcov = curve_fit(Gauss, positions_intensity_above_cut, intensities_intensity_above_cut, gaussfit_values) #is this a, x0, sigma? yes!
+    return positions_intensity_above_cut, intensities_intensity_above_cut, popt    
+    
+def calculate_area(x, *opt): #calls two other functions
     x_continuous_function = xvalues_for_continuous_curve(x)
-    y_continuous_function = Gauss(x_continuous_function, opt)
+    y_continuous_function = Gauss(x_continuous_function, *opt)
     hm = max(y_continuous_function)/2 #needed globally, output!
     x_curve, y_curve, x_left, x_right = fwhm_point_identifier(x_continuous_function, y_continuous_function, hm)
     total_area = simps(y_curve, x_curve)
     square_area = (x_right - x_left)*hm
     peak_area_above_fwhm = total_area - square_area
     return hm, peak_area_above_fwhm, x_left, x_right, x_continuous_function, y_continuous_function
-
-def compute_area(raw_intensity_greyvalues, increment):
-    _max, _min = peakbg(raw_intensity_greyvalues, raw_positon_values, lookahead = 2, delta = 0)
-    second_peak = second_largest([p[1] for p in _max])
-    if identified_single_peak(second_peak):
-        print(filename, "has only one peak, skip to next iteration")
-        #pass exception
-    positions_intensity_above_cut, intensities_intensity_above_cut = cut_background(raw_intensity_greyvalues, second_peak, increment)
-    gaussfit_values = fit_gaussian_to_shifted_data(positions_intensity_above_cut, intensities_intensity_above_cut) #rename
-    #c = min(intensities_intensity_above_cut)
-    try:
-        popt,pcov = curve_fit(Gauss, positions_intensity_above_cut, intensities_intensity_above_cut, gaussfit_values) #is this a, x0, sigma? yes!
-    except (RuntimeError, TypeError):
-        print("Runtime or Type Error, likely due to a bad measurement in ", filename)
-        #pass exception
-    return positions_intensity_above_cut, intensities_intensity_above_cut, popt
 
 for file in range(0, len(os.listdir('./csv/'))):
     filename = os.listdir('./csv/')[file]
@@ -113,7 +111,7 @@ for file in range(0, len(os.listdir('./csv/'))):
     raw_positon_values = image_data.X #pandas series object
     raw_intensity_greyvalues = image_data.Y #pandas series object
 
-    positions_intensity_above_cut, intensities_intensity_above_cut, popt = compute_area(raw_intensity_greyvalues, POSITIONINCREMENT)
+    positions_intensity_above_cut, intensities_intensity_above_cut, popt = compute_area(raw_intensity_greyvalues)
     hm, area, x_left, x_right, x_continuous_function, y_continuous_function = calculate_area(positions_intensity_above_cut, *popt)
 
     #******#
@@ -141,6 +139,6 @@ for file in range(0, len(os.listdir('./csv/'))):
     data_output.append([filename, area])
 
 with open('./csv/data_output.csv', "w", newline='') as csv_file:
-        writer = csv.writer(csv_file, delimiter=',')
-        for line in data_output:
-            writer.writerow(line)
+    writer = csv.writer(csv_file, delimiter=',')
+    for line in data_output:
+        writer.writerow(line)
