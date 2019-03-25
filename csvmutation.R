@@ -31,7 +31,8 @@ colnames(d.experiment_overview) <- c("strain", "celltype")
 for (i in 1:length(filenames)){
   d.temp <- read.csv(csvfileimportpaths[i], header = T, sep = ",")
   names(d.temp) <- gsub("\\.csv", "", filenames[i])
-  d.temp[,2] <- gsub(".", "", d.temp[,2], fixed = T)
+  d.temp[,2] <- d.temp[,2]*1000
+  #d.temp[,2] <- gsub(".", "", d.temp[,2], fixed = T)
   if (ncol(d.temp) == 3){
     d.temp2 <- c(1:nrow(d.temp))
     d.experiment_overview[i,'celltype'] <- d.temp[1, 2]
@@ -46,8 +47,8 @@ for (i in 1:length(filenames)){
   d.experiment_overview[i,'strain'] <- filenames[i]
   
   d.export <- d.temp[,1:2]
-  colnames(d.export) <- c("X", "Y") #renaming the columns
-  d.export[,"X"] <- d.export[,"X"]*0.128*1000 #be careful about this part: he allways has 0.128nm between each pixel we could just delete it. 
+  colnames(d.export) <- c("x", "y") #renaming the columns
+  d.export[,"x"] <- d.export[,"x"]*0.128*1000 #be careful about this part: he allways has 0.128nm between each pixel we could just delete it. 
   write.table(d.export, file = csvfileexportpaths[i],row.names=FALSE, sep=";")
 }
 
