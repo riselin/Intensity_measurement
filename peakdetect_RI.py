@@ -3,6 +3,8 @@
 """
 @author: riselAir
 #add license of some sort
+problem march 2019: due to the abs(x-hm) on line 75 and the effect on post comma values, all end up being the same
+No, the real problem is that Gauss() results in identical values. Why?
 """
 
 import os
@@ -83,14 +85,13 @@ def compute_area(y_greyscale):
     second_peak = second_largest([p[1] for p in _max])
     if identified_single_peak(second_peak):
         print(filename, "has only one peak, skip to next iteration")
-        #pass exception
     positions_intensity_above_cut, intensities_intensity_above_cut = cut_background(y_greyscale, second_peak)
     gaussfit_values = fit_gaussian_to_shifted_data(positions_intensity_above_cut, intensities_intensity_above_cut) #rename
     popt,pcov = curve_fit(Gauss, positions_intensity_above_cut, intensities_intensity_above_cut, gaussfit_values) #is this a, x0, sigma? yes!
     return positions_intensity_above_cut, intensities_intensity_above_cut, popt    
     
-def calculate_area(x, *opt): #calls two other functions
-    x_continuous_function = xvalues_for_continuous_curve(x)
+def calculate_area(x_with_y_above_cut, *opt): #calls two other functions
+    x_continuous_function = xvalues_for_continuous_curve(x_with_y_above_cut)
     y_continuous_function = Gauss(x_continuous_function, *opt)
     hm = max(y_continuous_function)/2 #needed globally, output!
     x_curve, y_curve, x_left, x_right = fwhm_point_identifier(x_continuous_function, y_continuous_function, hm)
@@ -106,7 +107,11 @@ for file in range(0, len(os.listdir('./csv/'))):
     raw_positon_values = image_data.X #pandas series object
     raw_intensity_greyvalues = image_data.Y #pandas series object
 
-    positions_intensity_above_cut, intensities_intensity_above_cut, popt = compute_area(raw_intensity_greyvalues)
+    try:
+        positions_intensity_above_cut, intensities_intensity_above_cut, popt = compute_area(raw_intensity_greyvalues, raw_positon_values)
+    except(RuntimeError, TypeError):
+        print("Runtime or Type Error, most likely due to a bad measurement in ", filename)
+        continue
     hm, area, x_left, x_right, x_continuous_function, y_continuous_function = calculate_area(positions_intensity_above_cut, *popt)
 
     #******#
