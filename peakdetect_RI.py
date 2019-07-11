@@ -5,6 +5,7 @@
 #add license of some sort
 problem march 2019: due to the abs(x-hm) on line 75 and the effect on post comma values, all end up being the same
 No, the real problem is that Gauss() results in identical values. Why?
+July 2019: add chisq test?
 """
 
 import os
@@ -48,7 +49,8 @@ def cut_background(raw_intensity, second):
     intensities_intensity_above_cut = difference_raw_intensity_second_peak[difference_raw_intensity_second_peak > 0]
     return positions_intensity_above_cut, intensities_intensity_above_cut
     
-def fit_gaussian_to_shifted_data(x_cut, y_cut): #counts as one argument because ordered compontents of single value
+def fit_gaussian_to_shifted_data(x_cut, y_cut): #counts as one argument because ordered components of single value
+    """determine parameters for gaussian fit. This should not be necessary, but somehow clearly helps."""
     function_mean = sum(x_cut * y_cut) / sum(y_cut)
     sigma = np.sqrt(sum(y_cut * (x_cut - function_mean) ** 2) / sum(y_cut))
     #global c
@@ -56,19 +58,20 @@ def fit_gaussian_to_shifted_data(x_cut, y_cut): #counts as one argument because 
     p0 = [max(y_cut), function_mean, sigma, c] #rename p0
     return p0
 
-def Gauss(x, a, x0, s, c): #counts as one argument because ordered compontents of single value
-    return a * np.exp(-(x - x0) ** 2 / (2 * s ** 2)) + c # scipy.stats.norm
+def Gauss(x, a, x0, s, c): #counts as one argument because ordered components of single value
+    return a * np.exp(-(x - x0) ** 2 / (2 * s ** 2)) # + c # scipy.stats.norm #alternative for c? np.random.normal(0,0.2, len(x))
 
-def xvalues_for_continuous_curve(x):
+def xvalues_for_continuous_curve(x): #replace with linspace...
     """xvalues_for_continuous_curve: enlarge xvalues by 1000 and fill to a resolution of 1 (e.g. add around 634 for 6 points)"""
+    """Use linspace instead?! yes..."""
     x = x*1000 #remove floats
     x_continuous_curve = np.array(range(int(min(x)), int(max(x)), 1))
     x_continuous_curve = x_continuous_curve/1000
     x = x/1000 #return floats
     return x_continuous_curve
-
+    
 def fwhm_point_identifier(x_cont, y_cont, hm):
-    # 3 arguments and 4 returns are bad design! Change x_cont and y_cont to one object, same for fx/fy and x_smaller/x_larger
+    # 3 input arguments and 4 returns are bad design! Change x_cont and y_cont to one object, same for fx/fy and x_smaller/x_larger. Also, name change for hm...
     y_peak_index = np.where(y_cont == max(y_cont))[0][0] #index of value of peak
     y_smaller_peak = y_cont[0:y_peak_index] # all y values left of peak
     y_larger_peak = y_cont[y_peak_index:] # all y values right of peak
@@ -80,18 +83,18 @@ def fwhm_point_identifier(x_cont, y_cont, hm):
     fx = x_cont[np.where(y_cont == y_left)[0][0]:np.where(y_cont == y_right)[0][0]]
     return fx, fy, x_smaller_peak, x_larger_peak
 
-def compute_area(y_greyscale):
-    _max, _min = peakbg(y_greyscale, raw_positon_values, lookahead = 2, delta = 0)
+def compute_area(y_greyscale): #requires: peakbg, second_largest, cut_background, fit_gaussian_to_shifted_data, curve_fit
+    _max, _min = peakbg(y_greyscale, raw_positon_values, lookahead = 2, delta = 0) #find second peak -> this is where the script is lacking!
     second_peak = second_largest([p[1] for p in _max])
     if identified_single_peak(second_peak):
-        print(filename, "has only one peak, skip to next iteration")
-    positions_intensity_above_cut, intensities_intensity_above_cut = cut_background(y_greyscale, second_peak)
-    gaussfit_values = fit_gaussian_to_shifted_data(positions_intensity_above_cut, intensities_intensity_above_cut) #rename
+        print(filename, "has only one peak, skip to next iteration") #needs an "else: do this thing with derivatives"
+    positions_intensity_above_cut, intensities_intensity_above_cut = cut_background(y_greyscale, second_peak) #after cutoff position is defined, cut off
+    gaussfit_values = fit_gaussian_to_shifted_data(positions_intensity_above_cut, intensities_intensity_above_cut) #this simplifies the data enough to fit a gaussian on top
     popt,pcov = curve_fit(Gauss, positions_intensity_above_cut, intensities_intensity_above_cut, gaussfit_values) #is this a, x0, sigma? yes!
     return positions_intensity_above_cut, intensities_intensity_above_cut, popt    
     
 def calculate_area(x_with_y_above_cut, *opt): #calls two other functions
-    x_continuous_function = xvalues_for_continuous_curve(x_with_y_above_cut)
+    x_continuous_function =  xvalues_for_continuous_curve(x_with_y_above_cut)
     y_continuous_function = Gauss(x_continuous_function, *opt)
     hm = max(y_continuous_function)/2 #needed globally, output!
     x_curve, y_curve, x_left, x_right = fwhm_point_identifier(x_continuous_function, y_continuous_function, hm)
@@ -104,6 +107,7 @@ for file in range(0, len(os.listdir('./csv/'))):
     filename = os.listdir('./csv/')[file]
     filepath = ('./csv/' + filename)
     image_data = pd.read_csv(filepath, delimiter = ";", encoding="utf-8-sig")
+    #get X and Y values
     raw_positon_values = image_data.X #pandas series object
     raw_intensity_greyvalues = image_data.Y #pandas series object
 

@@ -1,5 +1,3 @@
-
-
 var ActiveWindow;
 var count = 0;
 var AnaG1 = NaN;

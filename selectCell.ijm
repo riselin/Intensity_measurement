@@ -1,3 +1,4 @@
+//20190710
 // Script to select and correctly save image cutouts
 
 // open image [o]
@@ -85,6 +86,7 @@ macro "Macro_analyse distance in Ana [a]"{
 	print("   Press 'q' to close everything.");
 	print("");
 }
+
 macro "close all [q]"{
 	run("Close All");
 	print("image closed:  ", ActiveWindow);
@@ -130,12 +132,12 @@ function openImage(){
 		run("Enhance Contrast", "saturated=0.05");
 		run("Green");
 		Stack.setActiveChannels("111");
-		run("Set... ", "zoom=" + (1*constZoom));
+		//run("Set... ", "zoom=" + (1*constZoom));
 
 
 	run("Channels Tool...");
 	run("Brightness/Contrast...");
-	run("Set... ", "zoom=" + constZoom); 
+	//run("Set... ", "zoom=" + constZoom); 
 	
 	makeRectangle(252, 252, 41, 41);
 	setTool("rectangle");
