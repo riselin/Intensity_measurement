@@ -146,7 +146,7 @@ function openImage(){
 	count = 1;		// set count back to 1
 	
 	print(ActiveWindow);
-	print("    --> Select cell of interest, press 's' to save the specific cell.");
+	print("    --> Select cell of interest, press 'g' or 'a' to save the specific cell phase.");
 	print("    --> Or press 'q' to quit, or 'w' to load another file.");
 }
 
