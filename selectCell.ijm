@@ -176,7 +176,7 @@ function duplicateAndSave(fcount){
 	store_name = SaveName + ".tif";
 	saveAs("Tiff", path1 + store_name);
 	print("Cropped Tiff saved: " +  store_name);
-    close("Temp");
+    close();
     selectWindow(tempTitle);
     makeRectangle(252, 252, 41, 41);
 	setTool("rectangle");
