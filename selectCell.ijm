@@ -17,7 +17,7 @@ var count = 1;
 var constZoom = 200; //set zoom (%)
 var tempTitle = NaN;
 var AnaG1 = NaN;
-runSave = false;
+
 
 print("Press 'o' to open a file");
 
@@ -31,7 +31,7 @@ macro "open [o]"{
 macro "close and open next [w]"{
 	run("Close All");
 	print("image closed:  ", ActiveWindow);
-	print("done, "+ count + " cells analyzed from this image.");
+	print("done, "+ count-1 + " cells analyzed from this image.");
 	print("");
 	count = 1;
 	print("");
@@ -143,7 +143,6 @@ function openImage(){
 	setTool("rectangle");
 	
  	String.copy(ActiveWindow);  // Copy WindowID to clipboard
-	count = 1;		// set count back to 1
 	
 	print(ActiveWindow);
 	print("    --> Select cell of interest, press 'g' or 'a' to save the specific cell phase.");
@@ -152,21 +151,25 @@ function openImage(){
 
 function duplicateAndSave(fcount){
 	//print(ActiveWindow)	
-	SaveName = replace(ActiveWindow,".dv","_Crop_" + AnaG1 + "_" + count);
-	path1 =  getDirectory("current") + "Analysis\\";
+	SaveName = replace(ActiveWindow,".dv","_Crop_" + AnaG1 + "_" + fcount);
+	path1 =  getDirectory("current") + "SelectedCells\\";
 	if (!File.exists(path1)){
 			File.makeDirectory(path1);
-			write("Folder 'Analysis' created");
+			write("Folder 'SelectedCells' created");
 	}
 	
 	run("Duplicate...", "title=Temp duplicate channels=1-3 slices=1-10");
     run("In [+]");
 	run("In [+]");
 	selectWindow(tempTitle);
-	Stack.setChannel(2);
-	run("Clear", "slice");
-	Stack.setChannel(3);
-	run("Clear", "slice");
+    for (i=0; i< nSlices; i++){
+        Stack.setSlice(i);
+        Stack.setChannel(2);
+        run("Clear", "slice");
+        Stack.setChannel(3);
+        run("Clear", "slice");
+    }
+	
 
 	selectWindow("Temp");
 	
@@ -178,6 +181,7 @@ function duplicateAndSave(fcount){
 	print("Cropped Tiff saved: " +  store_name);
     close();
     selectWindow(tempTitle);
+    Stack.setSlice(5);
     makeRectangle(252, 252, 41, 41);
 	setTool("rectangle");
 }
