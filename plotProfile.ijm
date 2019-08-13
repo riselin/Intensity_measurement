@@ -218,7 +218,7 @@ function writeTableContent(setCellcounter, setAnaG1){
  		setResult("AnaG1", i, setAnaG1);
         setResult("CellID", i, setCellcounter);
     };
-    cellcounter = cellcounter + 1
+    cellcounter = cellcounter + 1;
     print("   Press 'c' to close and save the values and crop.");
     print("   Press 'n' if you want to save more from the same enlargement.");
 	selectWindow(tempTitle);
