@@ -10,6 +10,8 @@ var filelist = "";
 macro "open [o]"{
     pathImages = getDirectory("Choose directory...");
     filelist = getFileList(pathImages);
+    filelist = Array.sort(filelist);
+    //print(filelist[0]);
     fileCount = 0;
 	ActiveWindow = "NA";
 	openTIFfile();
@@ -48,6 +50,7 @@ macro "Scratch that cell [s]"{
     setResult(ActiveWindow + "_" + count, 6, 0);
     count++;
     fileCount++;
+    print("Cell scratched. Count: ", count, "; File Count: ", fileCount);
 }
 
 macro "Macro_analyse distance in G1 [g]"{
@@ -57,7 +60,7 @@ macro "Macro_analyse distance in G1 [g]"{
 	print("   Press 'q' to close everything.");
 	count++;
     fileCount++;
-	print(count);
+	print("Count: ", count, "; File Count: ", fileCount);
 }
 
 macro "Macro_analyse distance in Ana [a]"{
@@ -67,7 +70,7 @@ macro "Macro_analyse distance in Ana [a]"{
     selectWindow(tempTitle);
 	print("   Press 'q' to close everything.");
 	count++;
-	print(count);
+	print("Count: ", count, "; File Count: ", fileCount);
 }
 
 macro "Macro_analyse distance in Ana [d]"{
@@ -78,7 +81,7 @@ macro "Macro_analyse distance in Ana [d]"{
 	print("   Press 'q' to close everything.");
 	count++;
     fileCount++;
-	print(count);
+	print("Count: ", count, "; File Count: ", fileCount);
 }
 
 

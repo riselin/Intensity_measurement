@@ -54,6 +54,7 @@ macro "close all [q]"{
 
 macro "close and open next [w]"{
     run("Close All");
+    fileCount++;
     ActiveWindow = filelist[fileCount];
 	print("Next File will been opened");
 	openTIFfile();
@@ -182,7 +183,6 @@ function openTIFfile(){
     run("In [+]");
     run("In [+]");
     run("In [+]");
-	//run("In [+]"); //zoom in to 200%
 	
 	//set oval for measurement
 	selectWindow("SUM_C1-" + ActiveWindow); 
@@ -195,7 +195,7 @@ function openTIFfile(){
     run("In [+]");
     run("In [+]");
     run("In [+]");
-    run("In [+]");
+    //run("In [+]");
 	//close();
 	selectWindow("SUM_C3-" + ActiveWindow);//SUM_C3-
 	//run("Set... ", "zoom=" + (1*constZoom));
@@ -205,17 +205,23 @@ function openTIFfile(){
     run("In [+]");
     run("In [+]");
     run("In [+]");
-    run("In [+]");
+    //run("In [+]");
 	makeOval(40, 40, 3, 3); //position x, position y, width, heigth
 	//setTool("oval");
     setTool("zoom");
 	run("Channels Tool...");
 	run("Brightness/Contrast..."); // not really necessary - allows you to adjust brightness
 	print(ActiveWindow);
-	print("  --> Press 'q' to quit, 'w' to load the next file, or 'o' to open an image.");
-    print("Draw a circle of around 3x3 pixel to measure at 1200% magnification. Remember to measure for both channels.");
-	print("	  --> Press 'a' to measure intensity of the dot.");
-	print("	  --> Press 's' to measure intensity of the background and mark the measured cell.");
+    print("  --> Press 'i' to set the line width.");
+	print("  --> Press 'o' to open an image, 'q' to quit, or 'w' to load the next file.");
+    print("  --> Press 'u' to skip the cell, needs to be followed by 'w' to load the next image.");
+    print("  --> Press 'x' to select the line tool, or press 'c' to select the oval tool.");
+    print("For measurements, start with the line: ");
+    print("	 --> Press 'g' to plot the intensity through the g1 cell dot.");
+    print("	 --> Press 'f' to plot the intensity through the anaphase mother cell dot.");
+    print("	 --> Press 'd' to plot the intensity through the anaphase daughter cell dot.");
+	print("	 --> Press 'a' to measure intensity of the dot.");
+	print("	 --> Press 's' to measure intensity of the background and mark the measured cell.");
 	print("");
 	
 }
@@ -240,7 +246,7 @@ function cropTitleFluorophore(){
 
 function cropTitleFilename(){
     tempTitle=getTitle();
-    tempFile=substring(tempTitle, 7, lengthOf(tempTitle));
+    tempFile=substring(tempTitle, 7, lengthOf(tempTitle)); //removes SUM_CX- or MAX-CX- from the projection after opening
     return tempFile;
 }
 

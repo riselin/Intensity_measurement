@@ -72,6 +72,7 @@ macro "Macro_saveFiles_cropx G1 cell [g]"{
 	tempTitle=getTitle();
     duplicateAndSave(count);
     count = count + 1;
+    print("Next count: ", count);
 	print("   Press 'w' for new image.");
 	print("   Press 'q' to close everything.");
 	print("");
@@ -82,6 +83,7 @@ macro "Macro_analyse distance in Ana [a]"{
 	tempTitle=getTitle();
     duplicateAndSave(count);
     count = count + 1;
+    print("Next count: ", count);
 	print("   Press 'w' for new image.");
 	print("   Press 'q' to close everything.");
 	print("");
@@ -134,7 +136,8 @@ function openImage(){
 		Stack.setActiveChannels("111");
 		//run("Set... ", "zoom=" + (1*constZoom));
 
-
+    run("In [+]");
+    run("In [+]");
 	run("Channels Tool...");
 	run("Brightness/Contrast...");
 	//run("Set... ", "zoom=" + constZoom); 
@@ -154,8 +157,8 @@ function duplicateAndSave(fcount){
 	SaveName = replace(ActiveWindow,".dv","_Crop_" + AnaG1 + "_" + fcount);
 	path1 =  getDirectory("current") + "SelectedCells\\";
 	if (!File.exists(path1)){
-			File.makeDirectory(path1);
-			write("Folder 'SelectedCells' created");
+        File.makeDirectory(path1);
+        write("Folder 'SelectedCells' created");
 	}
 	
 	run("Duplicate...", "title=Temp duplicate channels=1-3 slices=1-10");
@@ -163,19 +166,15 @@ function duplicateAndSave(fcount){
 	run("In [+]");
 	selectWindow(tempTitle);
     for (i=0; i< nSlices; i++){
-        Stack.setSlice(i);
-        Stack.setChannel(2);
-        run("Clear", "slice");
-        Stack.setChannel(3);
-        run("Clear", "slice");
+    Stack.setSlice(i);
+    Stack.setChannel(2);
+    run("Clear", "slice");
+    Stack.setChannel(3);
+    run("Clear", "slice");
     }
-	
-
 	selectWindow("Temp");
 	
-	
 	//***SAVE AS TIFF****
-	
 	store_name = SaveName + ".tif";
 	saveAs("Tiff", path1 + store_name);
 	print("Cropped Tiff saved: " +  store_name);

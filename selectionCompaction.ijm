@@ -15,6 +15,7 @@ print("Press 'o' to open the file");
 macro "open [o]"{
     pathImages = getDirectory("Choose directory...");
     filelist = getFileList(pathImages);
+    filelist = Array.sort(filelist);
     fileCount = 0;
 	ActiveWindow = "NA";
 	openTIFfile();
@@ -77,7 +78,7 @@ macro "analyse intensity nuclear backbround[s]"{
 	run("Clear", "slice");
     count++;
     fileCount++;
-	print(count);
+	print("Count: ", count, "; File Count: ", fileCount);
 }
 
 //functions 
@@ -110,7 +111,6 @@ function openTIFfile(){
 
 	//split channels for sum intensity prjections
 	run("Set... ", "zoom=95"); 
-	
 	run("Split Channels"); //change to contraction: all with sum slices, not max intensity!
 	selectWindow("C1-"+ ActiveWindow); //brightfield
 	run("Z Project...", "projection=[Sum Slices]");
