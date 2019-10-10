@@ -153,7 +153,7 @@ function openTIFfile(){
 
 
 function cropTitleFilename(){
-    tempFile=fileTitle;
+    tempFile=File.name;
     return tempFile;
 }
 
