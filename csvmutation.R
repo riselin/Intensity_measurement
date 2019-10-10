@@ -48,7 +48,9 @@ for (i in 1:length(filenames)){
   
   d.export <- d.temp[,1:2]
   colnames(d.export) <- c("x", "y") #renaming the columns
-  d.export[,"x"] <- d.export[,"x"]*0.128*1000 #be careful about this part: he allways has 0.128nm between each pixel we could just delete it. 
+
+  d.export[,"x"] <- d.export[,"x"]*0.128 #be careful about this part: he allways has 0.128nm between each pixel we could just delete it. 
+
   write.table(d.export, file = csvfileexportpaths[i],row.names=FALSE, sep=";")
 }
 

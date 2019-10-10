@@ -14,34 +14,32 @@ var lineValue = 2;
 print("Press 'o' to open the file") 
 
 macro "Set Fluorophore and Line width [f]"{
-        //channelValue = Dialog.getNumber("Do you want to measure mCherry (second channel; press '2') \n or do you want to measure GFP (third channel; press '3')?");
-        Dialog.create ("Settings for intensity measurement");
+    //channelValue = Dialog.getNumber("Do you want to measure mCherry (second channel; press '2') \n or do you want to measure GFP (third channel; press '3')?");
+    Dialog.create ("Settings for intensity measurement");
 	Dialog.addMessage ("Do you want to measure mCherry (second channel; press '2') \nor do you want to measure GFP (third channel; press '3')?\nSet Line Width (Standard: 2)");
 	Dialog.addNumber ("Channel:", channelValue); //number 1
 	Dialog.addNumber ("Line Width:", lineValue); //number 2
-        Dialog.show ();
+    Dialog.show ();
 	channelValue = Dialog.getNumber (); //1
 	lineValue = Dialog.getNumber (); //2
         
-        if (channelValue == 2){
-                fluorophore = "SUM_C2-";
-        };
-        else if (channelValue == 3){
-                fluorophore = "SUM_C3-";
-        };
-        run("Line Width...", "line="+lineValue);
-        print("Channel set to " + fluorophore + " and LineWidth set to "+lineValue);
+    if (channelValue == 2){
+            fluorophore = "SUM_C2-";
+    };
+    else if (channelValue == 3){
+            fluorophore = "SUM_C3-";
+    };
+    run("Line Width...", "line="+lineValue);
+    print("Channel set to " + fluorophore + " and LineWidth set to "+lineValue);
 }
 
 macro "open and set channels [o]"{
-        print("Did you set the channels and linewidth?")
+    print("Did you set the channels and linewidth?")
 	ActiveWindow = "NA";
 	openDVFile();
 	makeRectangle(519, 500, 45, 45);
 	setTool("rectangle");
 }
-
-
 macro "close all [q]"{
 	run("Close All");
 	print("image closed:  ", ActiveWindow);
@@ -50,7 +48,6 @@ macro "close all [q]"{
 	count = 0;
 	
 }
-
 macro "close and open next [w]"{
 	run("Close All");
 	print("image closed:  ", ActiveWindow);
@@ -74,24 +71,17 @@ macro "close and open next [w]"{
 		};
 	else if (AWint > 9){	  
 		ActiveWindow = AWpre + AWint + AWend;
-		};
-	//else{
-	//	ActiveWindow = "Na";
-          //      print("ActiveWindow was set to Na; AWint was not a number ?!");
-		//};
+    };
 	print("Next File will been opened");
 	openDVFile();
 	makeRectangle(519, 500, 45, 45);
 	setTool("rectangle");
 }
-
 macro "Macro_saveFiles_cropx [s]"{
 	//run("Clear", "slice");
-        print(fluorophore+ActiveWindow); //delete as soon as it works
+    print(fluorophore+ActiveWindow); //delete as soon as it works
 	openSave(count);
-	
 	tempTitle=getTitle();
-	
 	run("Set... ", "zoom=" + (1*zoom));
 	setTool("line");
 	print(tempTitle);
@@ -104,39 +94,28 @@ macro "Macro_saveFiles_cropx [s]"{
 
 macro "Macro_analyse intensity in G1 [g]"{
 	AnaG1 = 0;
-        writeTableContent(cellcounter, AnaG1);
-
-
+    writeTableContent(cellcounter, AnaG1);
 }
 macro "Macro_analyse intensity in Ana [a]"{
 	AnaG1 = 1;
-        writeTableContent(cellcounter, AnaG1);
-
-
+    writeTableContent(cellcounter, AnaG1);
 }
-
 macro "Macro_analyse intensity in Ana [d]"{
 	AnaG1 = 2;
-        writeTableContent(cellcounter, AnaG1);
-	
-
+    writeTableContent(cellcounter, AnaG1);
 }
-
 macro "Save values from enlargment, go to next cell [n]"{
-        count = count + 1;
-        SaveNameM = replace(ActiveWindow,".dv","_Cell_" + count);
+    count = count + 1;
+    SaveNameM = replace(ActiveWindow,".dv","_Cell_" + count);
 	path1 =  getDirectory("current") + "Analysis\\";
 	store_nameM = SaveNameM + ".csv";
 	saveAs("Measurements", path1 + store_nameM);
 	run("Clear Results"); // clear after saving
 }
-
-
 macro "close plots and crops [c]"{
-	//close("Temp");
 	close("Cell*");
-        cellcounter = 0;
-        count = count + 1;
+    cellcounter = 0;
+    count = count + 1;
 	SaveNameM = replace(ActiveWindow,".dv","_Cell_" + count);
 	path1 =  getDirectory("current") + "Analysis\\";
 	store_nameM = SaveNameM + ".csv";
@@ -157,12 +136,12 @@ function openDVFile(){
 	len1 = lengthOf(ActiveWindow);
 	if (len1 > 10){
 		open(ActiveWindow);
-		}
+    }
 	else{
 		open();
 		ActiveWindow = File.name;
 		path =  getDirectory("current");
-		};
+    }
 	getDateAndTime(year, month, dayOfWeek, dayOfMonth, hour, minute, second, msec);
 	print("File opened: " + ActiveWindow );
 	print("Location: " + getDirectory("current"));
@@ -172,24 +151,24 @@ function openDVFile(){
 	// for intensity measurements: use sum slices!
 	run("Split Channels");
 	selectWindow("C1-"+ ActiveWindow);
-		run("Z Project...", "projection=[Sum Slices]");
-		run("16-bit");
+    run("Z Project...", "projection=[Sum Slices]");
+    run("16-bit");
 	selectWindow("C2-"+ ActiveWindow);
-		run("Z Project...", "projection=[Sum Slices]");
-		run("16-bit");
+    run("Z Project...", "projection=[Sum Slices]");
+    run("16-bit");
 	selectWindow("C3-"+ ActiveWindow);
-		run("Z Project...", "projection=[Sum Slices]");
-		run("16-bit");
+    run("Z Project...", "projection=[Sum Slices]");
+    run("16-bit");
 	// Merge and Set channels for z-stack
    	run("Merge Channels...", "title=" + ActiveWindow + " c1=C1-" + ActiveWindow + " c2=C2-" + ActiveWindow + " c3=C3-" + ActiveWindow + " create");
-   	   	Stack.setSlice(5);
-   	   	Stack.setChannel(1);
-		run("Grays");
-		Stack.setChannel(2);
-		run("Red");		
-		Stack.setChannel(3);
-		run("Green");
-		Stack.setActiveChannels("111");
+    Stack.setSlice(5);
+    Stack.setChannel(1);
+    run("Grays");
+    Stack.setChannel(2);
+    run("Red");		
+    Stack.setChannel(3);
+    run("Green");
+    Stack.setActiveChannels("111");
 	selectWindow(File.name);
 	run("In [+]"); //zoom in to 150%
 	//set oval for measurement
@@ -233,14 +212,14 @@ function openSave(count){
 }
 
 function writeTableContent(setCellcounter, setAnaG1){
-        profile = getProfile();
+    profile = getProfile();
 	for (i=0; i<profile.length; i++){
  		setResult("Value", i, profile[i]);
  		setResult("AnaG1", i, setAnaG1);
-                setResult("CellID", i, setCellcounter);
-                };
-        cellcounter = cellcounter + 1
-        print("   Press 'c' to close and save the values and crop.");
-        print("   Press 'n' if you want to save more from the same enlargement.");
+        setResult("CellID", i, setCellcounter);
+    };
+    cellcounter = cellcounter + 1;
+    print("   Press 'c' to close and save the values and crop.");
+    print("   Press 'n' if you want to save more from the same enlargement.");
 	selectWindow(tempTitle);
 }
